@@ -47,15 +47,31 @@ def mpdConnect(client, con_id):
 
 def loadMusic(client, con_id, device):
         os.system("mount "+device+" /music/usb")
+	sleep(0.1)
         os.system("/etc/init.d/mpd stop")
+	sleep(0.1)
         os.system("rm /music/mp3/*")
+	sleep(0.1)
         os.system("cp /music/usb/* /music/mp3/")
+	sleep(0.1)
         os.system("umount /music/usb")
+	sleep(0.1)
         os.system("rm /music/mpd/tag_cache")
+	sleep(0.1)
         os.system("/etc/init.d/mpd start")
+	sleep(0.1)
         os.system("mpc clear")
-        os.system("mpc ls | mpc add")
+	sleep(0.1)
+        os.system("mpc ls")
+	sleep(0.1)
+	os.system("mpc listall")
+	sleep(0.1)
+        os.system("mpc listall | mpc add")
+	sleep(0.1)
+	os.system("mpc playlist")
+	sleep(0.1)
         os.system("/etc/init.d/mpd restart")
+	sleep(0.1)
 
 def flashLED(speed, time):
         for x in range(0, time):
@@ -106,20 +122,30 @@ def main():
                         while checkForUSBDevice("1GB") == device:
                                 sleep(1.0)
                         flashLED(0.1, 5)
-                if GPIO.input(BUTTON) == True:
-                        if timebuttonisstillpressed == 0:
+                if  GPIO.input(BUTTON) == True:
+			while GPIO.input(BUTTON) == True:
+				timebuttonisstillpressed = timebuttonisstillpressed + 0.1
+				sleep(0.1)
+                        if timebuttonisstillpressed < 3:
                                 # button has been pressed, pause or unpause now
                                 if client.status()["state"] == "stop":
                                         client.play()
                                 else:
                                         client.pause()
                                 updateLED(client)
-                        elif timebuttonisstillpressed > 4:
-                                # go back one track if button is pressed > 4 secs
-                                client.previous()
-                                flashLED(0.1, 5)
-                                timebuttonisstillpressed = 0
-                        timebuttonisstillpressed = timebuttonisstillpressed + 0.1
+				timebuttonisstillpressed = 0
+                        elif (timebuttonisstillpressed >= 3) and (timebuttonisstillpressed < 7):
+                                # go back one track if button is pressed > 3 secs
+                                flashLED(0.1, 2)
+				client.previous()
+				timebuttonisstillpressed = 0
+				updateLED(client)
+			elif timebuttonisstillpressed >= 7:
+				# go forward one track if button pressed > 7 sec
+				flashLED(0.1, 3)
+				client.next()
+				timebuttonisstillpressed = 0
+				updateLED(client)
                 else:
                         timebuttonisstillpressed = 0
 
